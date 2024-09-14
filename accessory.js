@@ -37,6 +37,9 @@ class SonyProjectorAccessory {
       .getCharacteristic(this.Characteristic.On)
       .onGet(this.handleOnGet.bind(this))
       .onSet(this.handleOnSet.bind(this));
+
+    // Cached power state
+    this.powerState = false;
   }
 
   getServices() {
@@ -52,11 +55,18 @@ class SonyProjectorAccessory {
   // Handle getting the current power state
   async handleOnGet() {
     try {
-      const powerState = await this.adcpClient.getPowerState();
+      // Set a timeout for the getPowerState method
+      const powerState = await this.promiseTimeout(
+        this.adcpClient.getPowerState(),
+        2000, // 2-second timeout
+        'Timeout getting power state'
+      );
+      this.powerState = powerState;
       return powerState;
     } catch (error) {
       this.log.error('Error getting power state:', error);
-      throw new this.api.hap.HapStatusError(-70402); // Service communication failure
+      // Return the cached power state to prevent Homebridge from slowing down
+      return this.powerState;
     }
   }
 
@@ -64,11 +74,25 @@ class SonyProjectorAccessory {
   async handleOnSet(value) {
     try {
       await this.adcpClient.setPowerState(value);
+      this.powerState = value;
       this.log.info(`Projector turned ${value ? 'on' : 'off'}`);
     } catch (error) {
       this.log.error('Error setting power state:', error);
       throw new this.api.hap.HapStatusError(-70402);
     }
+  }
+
+  // Helper method to add a timeout to a promise
+  promiseTimeout(promise, ms, timeoutError) {
+    // Create a promise that rejects in <ms> milliseconds
+    const timeout = new Promise((_, reject) => {
+      const id = setTimeout(() => {
+        clearTimeout(id);
+        reject(new Error(timeoutError));
+      }, ms);
+    });
+    // Returns a race between timeout and the passed promise
+    return Promise.race([promise, timeout]);
   }
 }
 

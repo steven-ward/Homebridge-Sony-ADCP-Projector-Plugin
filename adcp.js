@@ -16,6 +16,8 @@ class ADCP {
     this.commandQueue = [];        // Queue for pending commands
     this.responseBuffer = '';      // Buffer for incoming data
     this.isConnecting = false;     // Connection state
+    this.connectionTimeout = 5000; // Connection timeout in milliseconds
+    this.commandTimeout = 5000;    // Command timeout in milliseconds
   }
 
   // Establish connection and authenticate if necessary
@@ -42,7 +44,15 @@ class ADCP {
     return new Promise((resolve, reject) => {
       this.client = new net.Socket();
 
+      const connectionTimer = setTimeout(() => {
+        this.log.error('Connection timeout');
+        this.disconnect();
+        this.isConnecting = false;
+        reject(new Error('Connection timeout'));
+      }, this.connectionTimeout);
+
       this.client.connect(this.port, this.ip, async () => {
+        clearTimeout(connectionTimer);
         this.log.debug('Connected to projector');
         try {
           if (this.useAuth) {
@@ -62,11 +72,14 @@ class ADCP {
       this.client.on('data', (data) => this.handleData(data));
 
       this.client.on('error', (error) => {
+        clearTimeout(connectionTimer);
         this.log.error('Socket error:', error);
         this.disconnect();
+        reject(error);
       });
 
       this.client.on('close', () => {
+        clearTimeout(connectionTimer);
         this.log.debug('Connection closed');
         this.isAuthenticated = false;
         this.client = null;
@@ -102,6 +115,12 @@ class ADCP {
   // Authenticate with the projector
   authenticate() {
     return new Promise((resolve, reject) => {
+      const authTimer = setTimeout(() => {
+        this.log.error('Authentication timeout');
+        this.disconnect();
+        reject(new Error('Authentication timeout'));
+      }, this.commandTimeout);
+
       const onData = (data) => {
         const message = data.toString();
 
@@ -111,10 +130,12 @@ class ADCP {
         } else if (message.includes('Login successful') || message.includes('> ')) {
           this.log.debug('Authenticated successfully');
           this.client.removeListener('data', onData);
+          clearTimeout(authTimer);
           resolve();
         } else if (message.includes('Login incorrect')) {
           this.log.error('Authentication failed');
           this.client.removeListener('data', onData);
+          clearTimeout(authTimer);
           reject(new Error('Authentication failed'));
         } else {
           // Handle any other authentication messages
@@ -137,7 +158,22 @@ class ADCP {
         return;
       }
 
-      this.commandQueue.push({ resolve, reject });
+      const commandTimer = setTimeout(() => {
+        this.log.error('Command timeout');
+        this.disconnect();
+        reject(new Error('Command timeout'));
+      }, this.commandTimeout);
+
+      this.commandQueue.push({
+        resolve: (response) => {
+          clearTimeout(commandTimer);
+          resolve(response);
+        },
+        reject: (error) => {
+          clearTimeout(commandTimer);
+          reject(error);
+        },
+      });
 
       // Send command with proper line ending
       this.client.write(`${command}\r\n`);
@@ -159,19 +195,27 @@ class ADCP {
 
   // Power Commands
   async getPowerState() {
-    const command = 'power_status ?';
-    const response = await this.executeCommand(command);
-    // Parse the response according to the projector's protocol
-    return response.toLowerCase().includes('on');
+    try {
+      const command = 'power_status ?';
+      const response = await this.executeCommand(command);
+      // Parse the response according to the projector's protocol
+      return response.toLowerCase().includes('on');
+    } catch (error) {
+      this.log.error('Error getting power state:', error);
+      throw error;
+    }
   }
 
   async setPowerState(state) {
-    const command = `power ${state ? 'on' : 'off'}`;
-    const response = await this.executeCommand(command);
-    return response;
+    try {
+      const command = `power ${state ? 'on' : 'off'}`;
+      const response = await this.executeCommand(command);
+      return response;
+    } catch (error) {
+      this.log.error('Error setting power state:', error);
+      throw error;
+    }
   }
-
-  // Additional methods can be added here as needed
 
   // Shutdown method to clean up resources
   shutdown() {
