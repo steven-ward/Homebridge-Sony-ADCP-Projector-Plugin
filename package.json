@@ -15,7 +15,7 @@
     "license": "MIT",
     "repository": {
       "type": "git",
-      "url": "https://github.com/yourusername/homebridge-sony-adcp-projector.git"
+      "url": "https://github.com/steven-ward/Homebridge-Sony-ADCP-Projector-Plugin"
     },
     "engines": {
       "node": ">=14.17.0",
