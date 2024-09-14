@@ -1,29 +1,36 @@
 {
-    "name": "homebridge-sony-adcp-projector",
-    "version": "1.0.0",
-    "description": "A Homebridge plugin to control Sony VPL-XW5000ES projector using ADCP and monitor status via SNMP.",
-    "main": "index.js",
-    "keywords": [
-      "homebridge-plugin",
-      "sony",
-      "projector",
-      "adcp",
-      "snmp",
-      "homekit"
-    ],
-    "author": "Steve Ward <steven@stevenward.com>",
-    "license": "MIT",
-    "repository": {
-      "type": "git",
-      "url": "https://github.com/steven-ward/Homebridge-Sony-ADCP-Projector-Plugin"
-    },
-    "engines": {
-      "node": ">=14.17.0",
-      "homebridge": ">=1.3.0"
-    },
-    "dependencies": {
-      "homebridge": "^1.3.0",
-      "hap-nodejs": "^0.9.4",
-      "net-snmp": "^2.10.7"
-    }
+  "name": "homebridge-sony-adcp-projector",
+  "version": "1.0.0",
+  "description": "A Homebridge plugin to control Sony VPL-XW5000ES projector using ADCP and monitor status via SNMP.",
+  "main": "index.js",
+  "keywords": [
+    "homebridge-plugin",
+    "sony",
+    "projector",
+    "adcp",
+    "snmp",
+    "homekit"
+  ],
+  "author": "Steve Ward <steven@stevenward.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/steven-ward/Homebridge-Sony-ADCP-Projector-Plugin.git"
+  },
+  "engines": {
+    "node": ">=14.17.0",
+    "homebridge": ">=1.3.0"
+  },
+  "dependencies": {
+    "homebridge": "^1.3.0",
+    "hap-nodejs": "^0.9.4",
+    "net-snmp": "^2.10.7"
+  },
+  "bugs": {
+    "url": "https://github.com/steven-ward/Homebridge-Sony-ADCP-Projector-Plugin/issues"
+  },
+  "homepage": "https://github.com/steven-ward/Homebridge-Sony-ADCP-Projector-Plugin#readme",
+  "scripts": {
+    "test": "echo \"No test specified\""
   }
+}
