@@ -20,9 +20,12 @@
     "node": ">=14.17.0",
     "homebridge": ">=1.3.0"
   },
-  "dependencies": {
-    "homebridge": "^1.3.0",
-    "hap-nodejs": "^0.9.4"
+  "dependencies": {},
+  "peerDependencies": {
+    "homebridge": ">=1.3.0"
+  },
+  "devDependencies": {
+    "homebridge": ">=1.3.0"
   },
   "bugs": {
     "url": "https://github.com/steven-ward/Homebridge-Sony-ADCP-Projector-Plugin/issues"
