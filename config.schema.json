@@ -1,0 +1,92 @@
+{
+    "pluginAlias": "SonyProjector",
+    "pluginType": "accessory",
+    "singular": true,
+    "headerDisplay": "Control your Sony VPL-XW5000ES projector using ADCP over IP and monitor status via SNMP.",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Accessory Name",
+          "type": "string",
+          "default": "Sony Projector",
+          "required": false
+        },
+        "ip": {
+          "title": "Projector IP Address",
+          "type": "string",
+          "required": true,
+          "description": "The static IP address assigned to your projector."
+        },
+        "adcpPort": {
+          "title": "ADCP Port",
+          "type": "integer",
+          "default": 53484,
+          "required": false,
+          "description": "Port number for ADCP communication (default is 53484)."
+        },
+        "username": {
+          "title": "Username",
+          "type": "string",
+          "required": false,
+          "description": "Username for projector authentication."
+        },
+        "password": {
+          "title": "Password",
+          "type": "string",
+          "required": false,
+          "description": "Password for projector authentication."
+        },
+        "useAuth": {
+          "title": "Use Authentication",
+          "type": "boolean",
+          "default": true,
+          "required": false,
+          "description": "Enable if your projector requires authentication."
+        },
+        "snmpPort": {
+          "title": "SNMP Port",
+          "type": "integer",
+          "default": 161,
+          "required": false,
+          "description": "Port number for SNMP communication (default is 161)."
+        },
+        "snmpCommunity": {
+          "title": "SNMP Community String",
+          "type": "string",
+          "default": "public",
+          "required": false,
+          "description": "Community string for SNMP (default is 'public')."
+        },
+        "pollingInterval": {
+          "title": "Polling Interval (seconds)",
+          "type": "integer",
+          "default": 60,
+          "required": false,
+          "description": "Interval in seconds for SNMP polling."
+        },
+        "logging": {
+          "title": "Logging Level",
+          "type": "string",
+          "default": "standard",
+          "required": false,
+          "oneOf": [
+            {
+              "title": "None",
+              "enum": ["none"]
+            },
+            {
+              "title": "Standard",
+              "enum": ["standard"]
+            },
+            {
+              "title": "Debug",
+              "enum": ["debug"]
+            }
+          ],
+          "description": "Set the logging level ('none', 'standard', 'debug')."
+        }
+      },
+      "required": ["ip"]
+    }
+  }
