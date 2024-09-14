@@ -1,6 +1,6 @@
 {
   "name": "homebridge-sony-adcp-projector",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A Homebridge plugin to control Sony VPL-XW5000ES projector using ADCP and monitor status via SNMP.",
   "main": "index.js",
   "keywords": [
