@@ -9,20 +9,22 @@ class SonyProjectorAccessory {
 
     // Configuration options
     this.ip = config.ip;
-    this.adcpPort = config.adcpPort || 53484;
+    this.adcpPort = config.adcpPort || 53595; // Default port changed to 53595
     this.username = config.username;
     this.password = config.password;
     this.useAuth = config.useAuth !== undefined ? config.useAuth : true;
+    this.timeout = (config.timeout || 60) * 1000; // Convert seconds to milliseconds
     this.logging = config.logging || 'standard';
 
-    // Initialize ADCP client
+    // Initialize ADCP client with the timeout setting
     this.adcpClient = new ADCP(
       this.ip,
       this.adcpPort,
       this.username,
       this.password,
       this.log,
-      this.useAuth
+      this.useAuth,
+      this.timeout
     );
 
     // Homebridge Service and Characteristic
@@ -58,7 +60,7 @@ class SonyProjectorAccessory {
       // Set a timeout for the getPowerState method
       const powerState = await this.promiseTimeout(
         this.adcpClient.getPowerState(),
-        2000, // 2-second timeout
+        this.timeout,
         'Timeout getting power state'
       );
       this.powerState = powerState;

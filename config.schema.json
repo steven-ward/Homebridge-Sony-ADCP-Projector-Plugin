@@ -44,6 +44,13 @@
         "required": false,
         "description": "Enable if your projector requires authentication."
       },
+      "timeout": {
+        "title": "Timeout (seconds)",
+        "type": "integer",
+        "default": 60,
+        "required": false,
+        "description": "The timeout for commands and connections, in seconds."
+      },
       "logging": {
         "title": "Logging Level",
         "type": "string",

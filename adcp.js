@@ -3,7 +3,7 @@
 const net = require('net');
 
 class ADCP {
-  constructor(ip, port, username, password, log, useAuth = true) {
+  constructor(ip, port, username, password, log, useAuth = true, timeout = 60000) {
     this.ip = ip;
     this.port = port;
     this.username = username;
@@ -16,8 +16,8 @@ class ADCP {
     this.commandQueue = [];        // Queue for pending commands
     this.responseBuffer = '';      // Buffer for incoming data
     this.isConnecting = false;     // Connection state
-    this.connectionTimeout = 5000; // Connection timeout in milliseconds
-    this.commandTimeout = 5000;    // Command timeout in milliseconds
+    this.connectionTimeout = timeout; // Use the configurable timeout for connection
+    this.commandTimeout = timeout;    // Use the configurable timeout for commands
   }
 
   // Establish connection and authenticate if necessary
