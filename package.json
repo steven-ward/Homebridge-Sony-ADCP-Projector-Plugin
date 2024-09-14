@@ -8,7 +8,6 @@
     "sony",
     "projector",
     "adcp",
-    "snmp",
     "homekit"
   ],
   "author": "Steve Ward <steven@stevenward.com>",
@@ -23,8 +22,7 @@
   },
   "dependencies": {
     "homebridge": "^1.3.0",
-    "hap-nodejs": "^0.9.4",
-    "net-snmp": "^2.10.7"
+    "hap-nodejs": "^0.9.4"
   },
   "bugs": {
     "url": "https://github.com/steven-ward/Homebridge-Sony-ADCP-Projector-Plugin/issues"
