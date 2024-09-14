@@ -1,6 +1,5 @@
 // accessory.js
 const ADCP = require('./adcp');
-const SNMP = require('./snmp');
 
 class SonyProjectorAccessory {
   constructor(log, config, api) {
@@ -14,12 +13,9 @@ class SonyProjectorAccessory {
     this.username = config.username;
     this.password = config.password;
     this.useAuth = config.useAuth !== undefined ? config.useAuth : true;
-    this.snmpPort = config.snmpPort || 161;
-    this.snmpCommunity = config.snmpCommunity || 'public';
-    this.pollingInterval = config.pollingInterval || 60; // in seconds
     this.logging = config.logging || 'standard';
 
-    // Initialize ADCP and SNMP clients
+    // Initialize ADCP client
     this.adcpClient = new ADCP(
       this.ip,
       this.adcpPort,
@@ -28,7 +24,6 @@ class SonyProjectorAccessory {
       this.log,
       this.useAuth
     );
-    this.snmpClient = new SNMP(this.ip, this.snmpPort, this.snmpCommunity, this.log);
 
     // Homebridge Service and Characteristic
     this.Service = this.api.hap.Service;
@@ -42,9 +37,6 @@ class SonyProjectorAccessory {
       .getCharacteristic(this.Characteristic.On)
       .onGet(this.handleOnGet.bind(this))
       .onSet(this.handleOnSet.bind(this));
-
-    // Start polling SNMP data
-    this.startPolling();
   }
 
   getServices() {
@@ -77,24 +69,6 @@ class SonyProjectorAccessory {
       this.log.error('Error setting power state:', error);
       throw new this.api.hap.HapStatusError(-70402);
     }
-  }
-
-  // Poll SNMP data at intervals
-  startPolling() {
-    setInterval(async () => {
-      try {
-        const status = await this.snmpClient.getStatus();
-        this.log.info('Projector Status:', status);
-        // You can update HomeKit characteristics here if needed
-      } catch (error) {
-        this.log.error('Error polling SNMP data:', error);
-      }
-    }, this.pollingInterval * 1000);
-  }
-
-  // Shutdown method to clean up resources
-  shutdown() {
-    this.adcpClient.shutdown();
   }
 }
 

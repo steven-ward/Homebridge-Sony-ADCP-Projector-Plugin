@@ -1,6 +1,6 @@
 # Homebridge Sony ADCP Projector Plugin
 
-A Homebridge plugin to control Sony VPL-XW5000ES projector using the ADCP protocol over IP and monitor status via SNMP.
+A Homebridge plugin to control Sony VPL-XW5000ES projector using the ADCP protocol over IP.
 
 ## Features
 
@@ -10,7 +10,6 @@ A Homebridge plugin to control Sony VPL-XW5000ES projector using the ADCP protoc
 - **Image Quality Settings**: Adjust brightness, contrast, and picture mode.
 - **Display Settings**: Change aspect ratio, screen position, and screen size.
 - **Freeze and Split Screen**: Control freeze function and split-screen mode.
-- **Status Monitoring via SNMP**: Monitor lamp hours, temperatures, and error statuses.
 - **Authentication Support**: Authenticate with the projector if required.
 - **Persistent Connection**: Efficient communication with the projector using a persistent TCP/IP connection.
 - **Robust Error Handling**: Handles network errors, timeouts, and disconnections gracefully.
