@@ -94,6 +94,9 @@ class ADCP {
     }
     this.client = null;
     this.isAuthenticated = false;
+    this.commandQueue = [];
+    this.responseBuffer = '';
+    this.isConnecting = false;
   }
 
   // Handle incoming data
@@ -199,7 +202,9 @@ class ADCP {
       const command = 'power_status ?';
       const response = await this.executeCommand(command);
       // Parse the response according to the projector's protocol
-      return response.toLowerCase().includes('on');
+      return response.toLowerCase().includes('on') || 
+             response.toLowerCase().includes('standby') || 
+             response.toLowerCase().includes('cooling1');
     } catch (error) {
       this.log.error('Error getting power state:', error);
       throw error;
@@ -208,11 +213,118 @@ class ADCP {
 
   async setPowerState(state) {
     try {
-      const command = `power ${state ? 'on' : 'off'}`;
+      const command = `power "${state ? 'on' : 'off'}"`;
       const response = await this.executeCommand(command);
+      if (!response.includes('success')) {
+        throw new Error('Failed to set power state');
+      }
       return response;
     } catch (error) {
       this.log.error('Error setting power state:', error);
+      throw error;
+    }
+  }
+
+  // Network Commands
+  async getIpAddress() {
+    try {
+      const command = 'ipv4_ip_address ?';
+      const response = await this.executeCommand(command);
+      return response;
+    } catch (error) {
+      this.log.error('Error getting IP address:', error);
+      throw error;
+    }
+  }
+
+  async getNetworkStatus() {
+    try {
+      const command = 'ipv4_network_setting ?';
+      const response = await this.executeCommand(command);
+      return response;
+    } catch (error) {
+      this.log.error('Error getting network status:', error);
+      throw error;
+    }
+  }
+
+  // Error and Warning Status
+  async getErrorStatus() {
+    try {
+      const command = 'error ?';
+      const response = await this.executeCommand(command);
+      return JSON.parse(response);
+    } catch (error) {
+      this.log.error('Error getting error status:', error);
+      throw error;
+    }
+  }
+
+  async getWarningStatus() {
+    try {
+      const command = 'warning ?';
+      const response = await this.executeCommand(command);
+      return response;
+    } catch (error) {
+      this.log.error('Error getting warning status:', error);
+      throw error;
+    }
+  }
+
+  // Input Selection
+  async setInputSource(source) {
+    try {
+      const command = `input "${source}"`;
+      const response = await this.executeCommand(command);
+      if (!response.includes('success')) {
+        throw new Error('Failed to set input source');
+      }
+      return response;
+    } catch (error) {
+      this.log.error('Error setting input source:', error);
+      throw error;
+    }
+  }
+
+  // Image Adjustment
+  async setBrightness(value) {
+    try {
+      const command = `brightness ${value}`;
+      const response = await this.executeCommand(command);
+      if (!response.includes('success')) {
+        throw new Error('Failed to set brightness');
+      }
+      return response;
+    } catch (error) {
+      this.log.error('Error setting brightness:', error);
+      throw error;
+    }
+  }
+
+  async setContrast(value) {
+    try {
+      const command = `contrast ${value}`;
+      const response = await this.executeCommand(command);
+      if (!response.includes('success')) {
+        throw new Error('Failed to set contrast');
+      }
+      return response;
+    } catch (error) {
+      this.log.error('Error setting contrast:', error);
+      throw error;
+    }
+  }
+
+  async setGamma(mode) {
+    try {
+      const command = `gamma_correction "${mode}"`;
+      const response = await this.executeCommand(command);
+      if (!response.includes('success')) {
+        throw new Error('Failed to set gamma mode');
+      }
+      return response;
+    } catch (error) {
+      this.log.error('Error setting gamma mode:', error);
       throw error;
     }
   }

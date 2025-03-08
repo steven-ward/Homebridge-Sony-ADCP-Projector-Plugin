@@ -44,12 +44,22 @@ class SonyProjectorAccessory {
     this.powerState = false;
   }
 
-  getServices() {
+  async getSerialNumber() {
+    try {
+      return await this.adcpClient.sendCommand('serialnum ?');
+    } catch (error) {
+      this.log.error('Error retrieving serial number:', error);
+      return 'Unknown';
+    }
+  }
+
+  async getServices() {
     // Information Service
+    const serialNumber = await this.getSerialNumber();
     const informationService = new this.Service.AccessoryInformation()
       .setCharacteristic(this.Characteristic.Manufacturer, 'Sony')
       .setCharacteristic(this.Characteristic.Model, 'VPL-XW5000ES')
-      .setCharacteristic(this.Characteristic.SerialNumber, 'Unknown');
+      .setCharacteristic(this.Characteristic.SerialNumber, serialNumber);
 
     return [informationService, this.service];
   }
@@ -57,13 +67,13 @@ class SonyProjectorAccessory {
   // Handle getting the current power state
   async handleOnGet() {
     try {
-      // Set a timeout for the getPowerState method
       const powerState = await this.promiseTimeout(
         this.adcpClient.getPowerState(),
         this.timeout,
         'Timeout getting power state'
       );
       this.powerState = powerState;
+      this.log.debug('Retrieved power state:', powerState);
       return powerState;
     } catch (error) {
       this.log.error('Error getting power state:', error);
@@ -75,11 +85,12 @@ class SonyProjectorAccessory {
   // Handle setting the power state
   async handleOnSet(value) {
     try {
+      this.log.debug('Setting power state to:', value);
       await this.adcpClient.setPowerState(value);
       this.powerState = value;
       this.log.info(`Projector turned ${value ? 'on' : 'off'}`);
     } catch (error) {
-      this.log.error('Error setting power state:', error);
+      this.log.error('Error setting power state:', error.message);
       throw new this.api.hap.HapStatusError(-70402);
     }
   }

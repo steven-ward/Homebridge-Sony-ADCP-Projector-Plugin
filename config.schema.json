@@ -22,7 +22,7 @@
         "title": "ADCP Port",
         "type": "integer",
         "default": 53595,
-        "required": false,
+        "required": true,
         "description": "Port number for ADCP communication (default is 53595)."
       },
       "username": {
@@ -70,9 +70,9 @@
             "enum": ["debug"]
           }
         ],
-        "description": "Set the logging level ('none', 'standard', 'debug')."
+        "description": "Set the logging level. Options are 'none' (no logging), 'standard' (basic logging), 'debug' (detailed logging for troubleshooting)."
       }
     },
-    "required": ["ip"]
+    "required": ["ip", "adcpPort"]
   }
 }

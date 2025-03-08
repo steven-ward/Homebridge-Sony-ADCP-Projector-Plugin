@@ -14,6 +14,10 @@ A Homebridge plugin to control Sony VPL-XW5000ES projector using the ADCP protoc
 - **Persistent Connection**: Efficient communication with the projector using a persistent TCP/IP connection.
 - **Robust Error Handling**: Handles network errors, timeouts, and disconnections gracefully.
 - **Logging**: Detailed logs for troubleshooting and monitoring.
+- **Error & Warning Status Monitoring**: Monitor the projector's error and warning statuses.
+- **Network Configuration Support**: Configure network settings for the projector.
+- **Improved Logging & Debugging**: Enhanced logging features for better debugging.
+- **Automatic Serial Number Retrieval**: Automatically retrieve the projector's serial number.
 
 ## Installation
 
@@ -21,3 +25,19 @@ A Homebridge plugin to control Sony VPL-XW5000ES projector using the ADCP protoc
 
    ```bash
    sudo npm install -g homebridge
+   ```
+
+## Configuration
+
+The plugin requires a configuration in JSON format. The following fields are required:
+
+- `adcpPort`: The port used for ADCP communication.
+- Updated logging options.
+
+## Usage
+
+To change inputs, use the HomeKit interface to select the desired input source. To adjust picture settings, access the respective settings in the HomeKit app. You can retrieve the projector status via the Homebridge interface.
+
+## Troubleshooting
+
+Common issues include authentication errors and network connectivity problems. Ensure that the projector is on the same network and that the correct authentication details are provided.
