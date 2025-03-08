@@ -21,11 +21,12 @@ class ADCP {
   // Establish connection and authenticate if necessary
   async connect() {
     if (this.client && !this.client.destroyed) {
-      return; // Already connected
+      this.log.info("Already connected.");
+      return;
     }
 
     if (this.isConnecting) {
-      // Wait until the connection is established
+      this.log.info("Connection attempt already in progress...");
       await new Promise((resolve) => {
         const checkInterval = setInterval(() => {
           if (!this.isConnecting) {
@@ -38,53 +39,48 @@ class ADCP {
     }
 
     this.isConnecting = true;
+    this.client = new net.Socket();
 
     return new Promise((resolve, reject) => {
-      this.client = new net.Socket();
-
       const connectionTimer = setTimeout(() => {
-        this.log.error('Connection timeout');
+        this.log.error(`⚠️ Connection timeout: Could not reach projector at ${this.ip}:${this.port}`);
         this.disconnect();
         this.isConnecting = false;
-        setTimeout(() => this.connect(), 5000); // Retry connection after 5 seconds
-        reject(new Error('Connection timeout'));
+        reject(new Error("Connection timeout"));
       }, this.connectionTimeout);
 
       this.client.connect(this.port, this.ip, async () => {
         clearTimeout(connectionTimer);
-        this.log.debug('Connected to projector');
+        this.log.info(`✅ Connected to projector at ${this.ip}:${this.port}`);
+
         try {
           if (this.useAuth) {
+            this.log.info("🔑 Authenticating...");
             await this.authenticate();
             this.isAuthenticated = true;
+            this.log.info("✅ Authentication successful.");
           }
           this.isConnecting = false;
           resolve();
         } catch (error) {
-          this.log.error('Authentication failed:', error);
+          this.log.error(`❌ Authentication failed: ${error.message}`);
           this.disconnect();
           this.isConnecting = false;
-          setTimeout(() => this.connect(), 5000); // Retry connection after failure
           reject(error);
         }
       });
 
-      this.client.on('data', (data) => this.handleData(data));
-
-      this.client.on('error', (error) => {
+      this.client.on("error", (error) => {
         clearTimeout(connectionTimer);
-        this.log.error('Socket error:', error);
+        this.log.error(`❌ Socket error: ${error.message}`);
         this.disconnect();
-        setTimeout(() => this.connect(), 5000); // Retry connection after failure
         reject(error);
       });
 
-      this.client.on('close', () => {
-        clearTimeout(connectionTimer);
-        this.log.warn('Connection closed, attempting to reconnect...');
+      this.client.on("close", () => {
+        this.log.warn("⚠️ Connection closed by the projector.");
         this.isAuthenticated = false;
         this.client = null;
-        setTimeout(() => this.connect(), 5000); // Retry connection after closure
       });
     });
   }
@@ -159,19 +155,21 @@ class ADCP {
   sendCommand(command) {
     return new Promise((resolve, reject) => {
       if (!this.client || this.client.destroyed) {
-        reject(new Error('Socket is not connected'));
+        this.log.error("❌ Command failed: Socket is not connected.");
+        reject(new Error("Socket is not connected"));
         return;
       }
 
       const commandTimer = setTimeout(() => {
-        this.log.error('Command timeout');
+        this.log.error(`⚠️ Command timeout: No response for '${command}'`);
         this.disconnect();
-        reject(new Error('Command timeout'));
+        reject(new Error("Command timeout"));
       }, this.commandTimeout);
 
       this.commandQueue.push({
         resolve: (response) => {
           clearTimeout(commandTimer);
+          this.log.info(`✅ Command executed: ${command}, Response: ${response}`);
           resolve(response);
         },
         reject: (error) => {
@@ -180,7 +178,7 @@ class ADCP {
         },
       });
 
-      // Send command with proper line ending
+      this.log.info(`📡 Sending command: ${command}`);
       this.client.write(`${command}\r\n`);
     });
   }
