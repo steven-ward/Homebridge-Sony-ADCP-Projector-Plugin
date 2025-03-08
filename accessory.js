@@ -49,10 +49,10 @@ class SonyProjectorAccessory {
       return await this.adcpClient.sendCommand('serialnum ?');
     } catch (error) {
       this.log.error('Error retrieving serial number:', error);
-      return 'Unknown';
+      return 'Unknown';  // Prevents crashing if the projector is offline
     }
   }
-
+  
   async getServices() {
     // Information Service
     const serialNumber = await this.getSerialNumber();
