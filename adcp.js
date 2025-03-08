@@ -1,5 +1,3 @@
-// adcp.js
-
 const net = require('net');
 
 class ADCP {
@@ -48,6 +46,7 @@ class ADCP {
         this.log.error('Connection timeout');
         this.disconnect();
         this.isConnecting = false;
+        setTimeout(() => this.connect(), 5000); // Retry connection after 5 seconds
         reject(new Error('Connection timeout'));
       }, this.connectionTimeout);
 
@@ -65,6 +64,7 @@ class ADCP {
           this.log.error('Authentication failed:', error);
           this.disconnect();
           this.isConnecting = false;
+          setTimeout(() => this.connect(), 5000); // Retry connection after failure
           reject(error);
         }
       });
@@ -75,14 +75,16 @@ class ADCP {
         clearTimeout(connectionTimer);
         this.log.error('Socket error:', error);
         this.disconnect();
+        setTimeout(() => this.connect(), 5000); // Retry connection after failure
         reject(error);
       });
 
       this.client.on('close', () => {
         clearTimeout(connectionTimer);
-        this.log.debug('Connection closed');
+        this.log.warn('Connection closed, attempting to reconnect...');
         this.isAuthenticated = false;
         this.client = null;
+        setTimeout(() => this.connect(), 5000); // Retry connection after closure
       });
     });
   }
