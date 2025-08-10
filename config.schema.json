@@ -2,7 +2,7 @@
   "pluginAlias": "SonyProjector",
   "pluginType": "accessory",
   "singular": true,
-  "headerDisplay": "Control your Sony VPL-XW5000ES projector using ADCP over IP.",
+  "headerDisplay": "Control your Sony projector over IP using Sony's ADCP protocol. Exposes a HomeKit Television tile with inputs.",
   "schema": {
     "type": "object",
     "properties": {
@@ -15,64 +15,130 @@
       "ip": {
         "title": "Projector IP Address",
         "type": "string",
+        "format": "ipv4",
+        "placeholder": "192.168.1.101",
         "required": true,
-        "description": "The static IP address assigned to your projector."
+        "description": "Set a DHCP reservation for reliability."
       },
       "adcpPort": {
         "title": "ADCP Port",
         "type": "integer",
         "default": 53595,
-        "required": true,
-        "description": "Port number for ADCP communication (default is 53595)."
-      },
-      "username": {
-        "title": "Username",
-        "type": "string",
+        "placeholder": "53595",
         "required": false,
-        "description": "Username for projector authentication."
-      },
-      "password": {
-        "title": "Password",
-        "type": "string",
-        "required": false,
-        "description": "Password for projector authentication."
+        "description": "TCP port for ADCP (default 53595)."
       },
       "useAuth": {
-        "title": "Use Authentication",
+        "title": "Requires Authentication",
         "type": "boolean",
-        "default": true,
+        "default": false,
         "required": false,
-        "description": "Enable if your projector requires authentication."
+        "description": "Enable only if ADCP ▶︎ Requires Authentication is ON in the projector web UI."
+      },
+      "password": {
+        "title": "ADCP Password",
+        "type": "string",
+        "required": false,
+        "description": "Used to compute the SHA-256 response to the projector's nonce when ADCP authentication is enabled.",
+        "condition": { "functionBody": "return model.useAuth === true;" }
       },
       "timeout": {
         "title": "Timeout (seconds)",
         "type": "integer",
-        "default": 60,
+        "default": 5,
+        "minimum": 1,
+        "maximum": 60,
         "required": false,
-        "description": "The timeout for commands and connections, in seconds."
+        "description": "How long to wait for projector replies before failing."
+      },
+      "inputs": {
+        "title": "Input Sources",
+        "type": "array",
+        "description": "Define inputs to appear in the Home app. Each input must have a unique Identifier.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "title": "Identifier",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 1,
+              "description": "Numeric ID used by HomeKit (1..50). Must be unique across inputs."
+            },
+            "name": {
+              "title": "Display Name",
+              "type": "string",
+              "default": "HDMI 1"
+            },
+            "adcp": {
+              "title": "ADCP Source Key",
+              "type": "string",
+              "default": "hdmi1",
+              "oneOf": [
+                { "title": "HDMI 1", "enum": ["hdmi1"] },
+                { "title": "HDMI 2", "enum": ["hdmi2"] },
+                { "title": "HDMI 3", "enum": ["hdmi3"] },
+                { "title": "HDMI 4", "enum": ["hdmi4"] },
+                { "title": "Custom (enter manually)", "enum": [""] }
+              ],
+              "description": "ADCP input token (e.g., hdmi1, hdmi2). If 'Custom', replace with the exact ADCP value supported by your model."
+            }
+          },
+          "required": ["id", "name", "adcp"]
+        },
+        "default": [
+          { "id": 1, "name": "HDMI 1", "adcp": "hdmi1" },
+          { "id": 2, "name": "HDMI 2", "adcp": "hdmi2" }
+        ]
+      },
+      "staticModel": {
+        "title": "Static Model (optional)",
+        "type": "string",
+        "required": false,
+        "description": "If set, this value is used for the Model characteristic instead of querying the projector at startup."
+      },
+      "staticSerial": {
+        "title": "Static Serial (optional)",
+        "type": "string",
+        "required": false,
+        "description": "If set, this value is used for the Serial Number characteristic instead of querying the projector at startup."
       },
       "logging": {
         "title": "Logging Level",
         "type": "string",
         "default": "standard",
-        "required": false,
         "oneOf": [
-          {
-            "title": "None",
-            "enum": ["none"]
-          },
-          {
-            "title": "Standard",
-            "enum": ["standard"]
-          },
-          {
-            "title": "Debug",
-            "enum": ["debug"]
-          }
+          { "title": "None", "enum": ["none"] },
+          { "title": "Standard", "enum": ["standard"] },
+          { "title": "Debug", "enum": ["debug"] }
         ],
-        "description": "Set the logging level. Options are 'none' (no logging), 'standard' (basic logging), 'debug' (detailed logging for troubleshooting)."
+        "required": false,
+        "description": "Controls verbosity of plugin logs."
       }
     },
-    "required": ["ip", "adcpPort"]
-  }
+    "required": ["ip"]
+  },
+  "layout": [
+    {
+      "type": "fieldset",
+      "title": "Connection",
+      "items": ["name", "ip", "adcpPort", "useAuth", "password", "timeout"]
+    },
+    {
+      "type": "fieldset",
+      "title": "Inputs",
+      "items": ["inputs"]
+    },
+    {
+      "type": "fieldset",
+      "title": "Device Info (optional)",
+      "items": ["staticModel", "staticSerial"]
+    },
+    {
+      "type": "fieldset",
+      "title": "Advanced",
+      "items": ["logging"]
+    }
+  ]
 }

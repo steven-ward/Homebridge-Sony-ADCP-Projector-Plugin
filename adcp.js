@@ -1,11 +1,21 @@
 const net = require('net');
+const crypto = require('crypto');
 
 class ADCP {
-  constructor(ip, port, username, password, log, useAuth = true, timeout = 60000) {
+  /**
+   * @param {string} ip
+   * @param {number} port
+   * @param {string|undefined} username  // not used by ADCP, kept for backwards compat
+   * @param {string|undefined} password  // ADCP password (if auth enabled)
+   * @param {object} log                 // homebridge logger
+   * @param {boolean} useAuth            // projector ADCP "Requires Authentication"
+   * @param {number} timeout             // base timeout in ms
+   */
+  constructor(ip, port = 53595, username, password, log, useAuth = false, timeout = 5000) {
     this.ip = ip;
     this.port = port;
     this.username = username;
-    this.password = password;
+    this.password = password || '';
     this.log = log;
     this.useAuth = useAuth;
 
@@ -14,25 +24,32 @@ class ADCP {
     this.commandQueue = [];        // Queue for pending commands
     this.responseBuffer = '';      // Buffer for incoming data
     this.isConnecting = false;     // Connection state
-    this.connectionTimeout = timeout; // Use the configurable timeout for connection
-    this.commandTimeout = timeout;    // Use the configurable timeout for commands
+    this.connectionTimeout = timeout; // Connection timeout
+    this.commandTimeout = timeout;    // Per-command timeout
+
+    // Debug helper (off by default; can be enabled via setDebug(true))
+    this.debugEnabled = false;
+    this.debug = () => {};
+  }
+
+  // Enable or disable verbose debug logs from this ADCP client
+  setDebug(enabled) {
+    this.debugEnabled = !!enabled;
+    this.debug = (this.debugEnabled && this.log && this.log.debug)
+      ? this.log.debug.bind(this.log)
+      : () => {};
   }
 
   // Establish connection and authenticate if necessary
   async connect() {
     if (this.client && !this.client.destroyed) {
-      this.log.info("Already connected.");
-      return;
+      return; // already connected
     }
 
     if (this.isConnecting) {
-      this.log.info("Connection attempt already in progress...");
       await new Promise((resolve) => {
-        const checkInterval = setInterval(() => {
-          if (!this.isConnecting) {
-            clearInterval(checkInterval);
-            resolve();
-          }
+        const check = setInterval(() => {
+          if (!this.isConnecting) { clearInterval(check); resolve(); }
         }, 50);
       });
       return;
@@ -43,23 +60,43 @@ class ADCP {
 
     return new Promise((resolve, reject) => {
       const connectionTimer = setTimeout(() => {
-        this.log.error(`⚠️ Connection timeout: Could not reach projector at ${this.ip}:${this.port}`);
+        this.log.error(`⚠️ Connection timeout: ${this.ip}:${this.port}`);
         this.disconnect();
         this.isConnecting = false;
-        reject(new Error("Connection timeout"));
+        reject(new Error('Connection timeout'));
       }, this.connectionTimeout);
+
+      // Common handlers
+      this.client.on('error', (error) => {
+        clearTimeout(connectionTimer);
+        this.log.error(`❌ Socket error: ${error.message}`);
+        this.disconnect();
+        reject(error);
+      });
+
+      this.client.on('close', () => {
+        this.log.warn('⚠️ Connection closed by the projector.');
+        this.isAuthenticated = false;
+        this.client = null;
+      });
 
       this.client.connect(this.port, this.ip, async () => {
         clearTimeout(connectionTimer);
-        this.log.info(`✅ Connected to projector at ${this.ip}:${this.port}`);
-
         try {
+          // Attach data handler now; it won't resolve anything until a command is queued
+          this.client.on('data', (data) => this.handleData(data));
+          // Improve stability on idling projectors
+          try { this.client.setKeepAlive(true, 15000); } catch (e) { /* noop */ }
+
           if (this.useAuth) {
-            this.log.info("🔑 Authenticating...");
             await this.authenticate();
+            this.debug('✅ ADCP authentication successful.');
+          } else {
+            // Drain an initial NOKEY if projector sends it (no-auth mode)
             this.isAuthenticated = true;
-            this.log.info("✅ Authentication successful.");
           }
+
+          this.debug('ADCP connected');
           this.isConnecting = false;
           resolve();
         } catch (error) {
@@ -69,26 +106,13 @@ class ADCP {
           reject(error);
         }
       });
-
-      this.client.on("error", (error) => {
-        clearTimeout(connectionTimer);
-        this.log.error(`❌ Socket error: ${error.message}`);
-        this.disconnect();
-        reject(error);
-      });
-
-      this.client.on("close", () => {
-        this.log.warn("⚠️ Connection closed by the projector.");
-        this.isAuthenticated = false;
-        this.client = null;
-      });
     });
   }
 
   // Disconnect the socket
   disconnect() {
     if (this.client && !this.client.destroyed) {
-      this.client.destroy();
+      try { this.client.destroy(); } catch (e) { /* noop */ }
     }
     this.client = null;
     this.isAuthenticated = false;
@@ -97,79 +121,90 @@ class ADCP {
     this.isConnecting = false;
   }
 
-  // Handle incoming data
+  // Handle incoming data (CRLF-delimited lines)
   handleData(data) {
-    this.responseBuffer += data.toString();
+    this.responseBuffer += data.toString('utf8');
 
-    // Check for command completion (e.g., newline character)
-    if (this.responseBuffer.endsWith('\r\n') || this.responseBuffer.endsWith('> ')) {
-      const response = this.responseBuffer.trim();
-      this.responseBuffer = '';
+    let idx;
+    while ((idx = this.responseBuffer.indexOf('\r\n')) !== -1) {
+      const line = this.responseBuffer.slice(0, idx).trim();
+      this.responseBuffer = this.responseBuffer.slice(idx + 2);
+
+      // Ignore ADCP banner lines that can arrive in the same frame as command responses
+      if (line === 'NOKEY' || line.length === 0) {
+        this.debug('[ADCP] banner ignored:', JSON.stringify(line));
+        continue;
+      }
 
       if (this.commandQueue.length > 0) {
         const { resolve } = this.commandQueue.shift();
-        resolve(response);
+        resolve(line);
+      } else {
+        // No pending commands; treat as informational only
+        this.debug('[ADCP] unsolicited:', JSON.stringify(line));
       }
     }
   }
 
-  // Authenticate with the projector
+  // ADCP authenticate: either NOKEY (no auth) or nonce -> sha256(nonce+password)
   authenticate() {
     return new Promise((resolve, reject) => {
-      const authTimer = setTimeout(() => {
-        this.log.error('Authentication timeout');
-        this.disconnect();
-        reject(new Error('Authentication timeout'));
-      }, this.commandTimeout);
+      let nonce = '';
+      const timer = setTimeout(() => { cleanup(); reject(new Error('Authentication timeout')); }, this.commandTimeout);
 
-      const onData = (data) => {
-        const message = data.toString();
+      const onData = (buf) => {
+        const chunk = buf.toString('utf8');
+        const lines = chunk.split(/\r\n/).map(l => l.trim()).filter(Boolean);
+        for (const lineRaw of lines) {
+          const line = lineRaw.trim();
+          if (!line) continue;
 
-        if (message.includes('Password:')) {
-          this.log.debug('Password requested');
-          this.client.write(`${this.password}\r\n`);
-        } else if (message.includes('Login successful') || message.includes('> ')) {
-          this.log.debug('Authenticated successfully');
-          this.client.removeListener('data', onData);
-          clearTimeout(authTimer);
-          resolve();
-        } else if (message.includes('Login incorrect')) {
-          this.log.error('Authentication failed');
-          this.client.removeListener('data', onData);
-          clearTimeout(authTimer);
-          reject(new Error('Authentication failed'));
-        } else {
-          // Handle any other authentication messages
-          this.log.debug('Authentication response:', message);
+          // No-auth mode explicitly tells us NOKEY
+          if (line === 'NOKEY') { cleanup(); this.isAuthenticated = true; return resolve(); }
+
+          if (!nonce) {
+            // First non-empty line is the nonce
+            nonce = line;
+            const hash = crypto.createHash('sha256').update(nonce + this.password, 'utf8').digest('hex');
+            this.client.write(hash + '\r\n');
+            this.debug('ADCP >> [auth hash]');
+            continue;
+          }
+
+          // After sending hash, expect 'ok' on success
+          const l = line.toLowerCase();
+          if (l.startsWith('ok')) { cleanup(); this.isAuthenticated = true; return resolve(); }
+          if (l.startsWith('err')) { cleanup(); return reject(new Error(`ADCP auth error: ${line}`)); }
         }
       };
 
-      this.client.on('data', onData);
+      const cleanup = () => {
+        clearTimeout(timer);
+        this.client?.removeListener('data', onData);
+      };
 
-      // Send username
-      this.client.write(`${this.username}\r\n`);
+      // Temporary listener just for auth handshake; handleData will ignore until commands are queued
+      this.client.on('data', onData);
     });
   }
 
-  // Send a command and receive the response
+  // Send a command and receive a single-line response
   sendCommand(command) {
     return new Promise((resolve, reject) => {
       if (!this.client || this.client.destroyed) {
-        this.log.error("❌ Command failed: Socket is not connected.");
-        reject(new Error("Socket is not connected"));
-        return;
+        return reject(new Error('Socket is not connected'));
       }
 
       const commandTimer = setTimeout(() => {
-        this.log.error(`⚠️ Command timeout: No response for '${command}'`);
+        this.log.error(`⚠️ Command timeout: '${command}'`);
         this.disconnect();
-        reject(new Error("Command timeout"));
+        reject(new Error('Command timeout'));
       }, this.commandTimeout);
 
       this.commandQueue.push({
         resolve: (response) => {
           clearTimeout(commandTimer);
-          this.log.info(`✅ Command executed: ${command}, Response: ${response}`);
+          this.debug(`ADCP << ${response}`);
           resolve(response);
         },
         reject: (error) => {
@@ -178,155 +213,92 @@ class ADCP {
         },
       });
 
-      this.log.info(`📡 Sending command: ${command}`);
+      this.debug(`ADCP >> ${command}`);
       this.client.write(`${command}\r\n`);
     });
   }
 
   // Execute a command, ensuring connection and authentication
   async executeCommand(command) {
-    try {
-      await this.connect();
-      const response = await this.sendCommand(command);
-      this.log.debug(`Command executed: ${command}, Response: ${response}`);
-      return response;
-    } catch (error) {
-      this.log.error('Failed to execute command:', error);
-      throw error;
-    }
+    await this.connect();
+    const response = await this.sendCommand(command);
+    return response;
   }
 
   // Power Commands
   async getPowerState() {
     try {
-      const command = 'power_status ?';
-      const response = await this.executeCommand(command);
-      // Parse the response according to the projector's protocol
-      return response.toLowerCase().includes('on') || 
-             response.toLowerCase().includes('standby') || 
-             response.toLowerCase().includes('cooling1');
+      const resp = (await this.executeCommand('power_status ?')).toLowerCase();
+      // Typical returns: 'on', 'standby', 'cooling1', 'cooling2'
+      return resp === 'on';
     } catch (error) {
-      this.log.error('Error getting power state:', error);
+      this.log.error('Error getting power state:', error.message);
       throw error;
     }
   }
 
   async setPowerState(state) {
     try {
-      const command = `power "${state ? 'on' : 'off'}"`;
-      const response = await this.executeCommand(command);
-      if (!response.includes('success')) {
-        throw new Error('Failed to set power state');
-      }
-      return response;
+      const resp = (await this.executeCommand(`power "${state ? 'on' : 'off'}"`)).toLowerCase();
+      if (resp !== 'ok') throw new Error(`Power set failed: ${resp}`);
+      return true;
     } catch (error) {
-      this.log.error('Error setting power state:', error);
+      this.log.error('Error setting power state:', error.message);
       throw error;
     }
   }
 
   // Network Commands
   async getIpAddress() {
-    try {
-      const command = 'ipv4_ip_address ?';
-      const response = await this.executeCommand(command);
-      return response;
-    } catch (error) {
-      this.log.error('Error getting IP address:', error);
-      throw error;
-    }
+    const resp = await this.executeCommand('ipv4_ip_address ?');
+    return resp;
   }
 
   async getNetworkStatus() {
-    try {
-      const command = 'ipv4_network_setting ?';
-      const response = await this.executeCommand(command);
-      return response;
-    } catch (error) {
-      this.log.error('Error getting network status:', error);
-      throw error;
-    }
+    const resp = await this.executeCommand('ipv4_network_setting ?');
+    return resp;
   }
 
   // Error and Warning Status
   async getErrorStatus() {
-    try {
-      const command = 'error ?';
-      const response = await this.executeCommand(command);
-      return JSON.parse(response);
-    } catch (error) {
-      this.log.error('Error getting error status:', error);
-      throw error;
+    const resp = await this.executeCommand('error ?');
+    if (resp && resp.startsWith('{')) {
+      try { return JSON.parse(resp); } catch {
+        return { raw: resp };
+      }
     }
+    return { raw: resp };
   }
 
   async getWarningStatus() {
-    try {
-      const command = 'warning ?';
-      const response = await this.executeCommand(command);
-      return response;
-    } catch (error) {
-      this.log.error('Error getting warning status:', error);
-      throw error;
-    }
+    const resp = await this.executeCommand('warning ?');
+    return resp;
   }
 
   // Input Selection
   async setInputSource(source) {
-    try {
-      const command = `input "${source}"`;
-      const response = await this.executeCommand(command);
-      if (!response.includes('success')) {
-        throw new Error('Failed to set input source');
-      }
-      return response;
-    } catch (error) {
-      this.log.error('Error setting input source:', error);
-      throw error;
-    }
+    const resp = (await this.executeCommand(`input "${source}"`)).toLowerCase();
+    if (resp !== 'ok') throw new Error(`Failed to set input source: ${resp}`);
+    return true;
   }
 
   // Image Adjustment
   async setBrightness(value) {
-    try {
-      const command = `brightness ${value}`;
-      const response = await this.executeCommand(command);
-      if (!response.includes('success')) {
-        throw new Error('Failed to set brightness');
-      }
-      return response;
-    } catch (error) {
-      this.log.error('Error setting brightness:', error);
-      throw error;
-    }
+    const resp = (await this.executeCommand(`brightness ${value}`)).toLowerCase();
+    if (resp !== 'ok') throw new Error(`Failed to set brightness: ${resp}`);
+    return true;
   }
 
   async setContrast(value) {
-    try {
-      const command = `contrast ${value}`;
-      const response = await this.executeCommand(command);
-      if (!response.includes('success')) {
-        throw new Error('Failed to set contrast');
-      }
-      return response;
-    } catch (error) {
-      this.log.error('Error setting contrast:', error);
-      throw error;
-    }
+    const resp = (await this.executeCommand(`contrast ${value}`)).toLowerCase();
+    if (resp !== 'ok') throw new Error(`Failed to set contrast: ${resp}`);
+    return true;
   }
 
   async setGamma(mode) {
-    try {
-      const command = `gamma_correction "${mode}"`;
-      const response = await this.executeCommand(command);
-      if (!response.includes('success')) {
-        throw new Error('Failed to set gamma mode');
-      }
-      return response;
-    } catch (error) {
-      this.log.error('Error setting gamma mode:', error);
-      throw error;
-    }
+    const resp = (await this.executeCommand(`gamma_correction "${mode}"`)).toLowerCase();
+    if (resp !== 'ok') throw new Error(`Failed to set gamma mode: ${resp}`);
+    return true;
   }
 
   // Shutdown method to clean up resources

@@ -41,3 +41,119 @@ To change inputs, use the HomeKit interface to select the desired input source. 
 ## Troubleshooting
 
 Common issues include authentication errors and network connectivity problems. Ensure that the projector is on the same network and that the correct authentication details are provided.
+# Homebridge Sony ADCP Projector
+
+[![npm](https://img.shields.io/npm/v/homebridge-sony-adcp-projector)](https://www.npmjs.com/package/homebridge-sony-adcp-projector)
+[![Homebridge Verified](https://img.shields.io/badge/homebridge-verified-brightgreen)](https://homebridge.io)
+
+Control your Sony projector over IP using the ADCP protocol. This plugin exposes the projector to Apple HomeKit as a **Television** accessory, complete with power control, input selection, and the native Remote UI in the Home app.
+
+---
+
+## Features
+
+### Core
+- **Power On / Off** from the Home app.
+- **Input Source Selection** (HDMI1, HDMI2, etc.).
+- **HomeKit Television UI** with remote control support.
+- Optional **ADCP Authentication**.
+- **Automatic Serial Number Retrieval**.
+
+### Optional Controls *(model-dependent)*
+- Volume and mute.
+- Brightness, contrast, picture mode.
+- Aspect ratio, screen position, screen size.
+- Freeze and split screen.
+
+### Other
+- Persistent TCP/IP connection.
+- Error & warning status monitoring.
+- Detailed logging for troubleshooting.
+
+---
+
+## Requirements
+- Node.js >= 18.20.0
+- Homebridge >= 1.6.0
+- A Sony projector with **ADCP** enabled (Settings > Network Settings > ADCP)
+- The projector’s IP address (reserve it via DHCP for stability)
+- Default ADCP port: **53595**
+
+---
+
+## Installation
+
+```bash
+sudo npm install -g homebridge
+sudo npm install -g homebridge-sony-adcp-projector
+```
+
+---
+
+## Configuration
+
+Use the Homebridge UI to configure the plugin via the graphical settings editor. The most important fields:
+
+| Field              | Type    | Default | Description |
+|--------------------|---------|---------|-------------|
+| `ip`               | string  | —       | Projector IP address (required). |
+| `adcpPort`         | integer | 53595   | TCP port for ADCP. |
+| `useAuth`          | boolean | false   | Whether ADCP authentication is required. |
+| `password`         | string  | —       | Password for ADCP authentication (if enabled). |
+| `timeout`          | integer | 5       | Timeout in seconds for commands. |
+| `inputs`           | array   | HDMI 1, HDMI 2 | Inputs to appear in HomeKit. |
+
+Example JSON config:
+```json
+{
+  "accessories": [
+    {
+      "accessory": "SonyProjector",
+      "name": "Sony Projector",
+      "ip": "192.168.1.101",
+      "adcpPort": 53595,
+      "useAuth": false,
+      "timeout": 5,
+      "inputs": [
+        { "id": 1, "name": "Apple TV", "adcp": "hdmi1" },
+        { "id": 2, "name": "PS5", "adcp": "hdmi2" }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+## Usage
+
+Once added to HomeKit:
+- **Single tap** the TV tile to toggle power.
+- **Long press** to open remote controls, input selector, and settings.
+- Select inputs from the list defined in your config.
+
+---
+
+## Troubleshooting
+
+- **No response / offline** → Verify ADCP is enabled and the IP/port are correct.
+- **Authentication errors** → Ensure projector’s ADCP settings match the plugin config.
+- **Slow commands** → Increase `timeout` in plugin settings.
+
+---
+
+## Development
+
+Clone the repo and link it to a local Homebridge instance:
+```bash
+git clone https://github.com/steven-ward/Homebridge-Sony-ADCP-Projector-Plugin.git
+cd Homebridge-Sony-ADCP-Projector-Plugin
+npm install
+npm link
+homebridge -D -P .
+```
+
+---
+
+## License
+[MIT](LICENSE)
