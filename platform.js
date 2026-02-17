@@ -300,6 +300,9 @@ class SonyProjectorPlatform {
         this.Characteristic.TargetMediaState,
         this.Characteristic.TargetMediaState.STOP,
       );
+    this.tvService
+      .getCharacteristic(this.Characteristic.TargetMediaState)
+      .onSet(async () => {});
 
     // Power (Active) - return cached value immediately, polling updates it
     this.tvService

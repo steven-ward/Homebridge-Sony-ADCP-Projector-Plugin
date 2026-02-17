@@ -1,9 +1,20 @@
 node_modules/
 *.tgz
 *.log
-.DS_Store
+**/.DS_Store
 .env
 
 # Live-device test output
 adcp-test-*.json
 homebridge.log.txt
+
+# Internal dev tooling
+.claude/
+.vscode/
+validate-adcp.js
+accessory.legacy.js
+IMPROVEMENTS.md
+test-adcp.js
+
+# Sony proprietary docs
+*.pdf

@@ -9,9 +9,7 @@ const ADCP_COMMANDS = {
   POWER_STATUS: "power_status ?",
 
   // Device info
-  MODEL_NAME: "modelname ?",
   MODEL_QUERY: "modelname ?",
-  SERIAL_NUMBER: "serialnum ?",
   SERIAL_QUERY: "serialnum ?",
   FIRMWARE_QUERY: "version ?",
 
@@ -22,7 +20,6 @@ const ADCP_COMMANDS = {
   // Errors / warnings
   ERROR_STATUS: "error ?",
   WARNING_STATUS: "warning ?",
-  ERROR_CODE: "error ?",
 
   // Inputs
   INPUT_QUERY: "input ?",
@@ -50,7 +47,7 @@ const ADCP_COMMANDS = {
   // Test patterns
   TEST_PATTERN_SET: (code) => `test_pattern "${code}"`,
 
-  // Lamp/Laser hours
+  // Lamp/Laser hours — aliases FIRMWARE_QUERY intentionally (same wire command, different parsing)
   LAMP_HOURS: "version ?",
 };
 

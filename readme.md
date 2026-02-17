@@ -63,25 +63,37 @@ sudo npm install -g homebridge-sony-adcp-projector
 
 ---
 
+## Network Requirements
+
+| Direction         | Protocol | Port  | Purpose                            |
+| ----------------- | -------- | ----- | ---------------------------------- |
+| Homebridge → Proj | TCP      | 53595 | ADCP command/response channel      |
+| Homebridge → Proj | TCP      | 53595 | Auth nonce exchange (if `useAuth`) |
+
+The projector must be on the same LAN segment as Homebridge, or routed so TCP port 53595 is reachable. Assign the projector a static IP or DHCP reservation — if the IP changes, HomeKit will lose the device.
+
+Enable ADCP in the projector web UI: **Network** → **ADCP** → **Enable**.
+
+---
+
 ## Configuration Overview
 
 The Homebridge UI config editor exposes the full schema. Key fields:
 
-| Field                                      | Type             | Default         | Description                                                                            |
-| ------------------------------------------ | ---------------- | --------------- | -------------------------------------------------------------------------------------- |
-| `ip`                                       | string           | —               | Projector IP (required)                                                                |
-| `adcpPort`                                 | integer          | 53595           | ADCP TCP port                                                                          |
-| `useAuth` / `password`                     | boolean / string | false / —       | Enable if ADCP "Requires Authentication" is ON                                         |
-| `inputs`                                   | array            | HDMI1/2         | Inputs shown in HomeKit (unique IDs)                                                   |
-| `enableBrightness`                         | boolean          | true            | Add Lightbulb service for brightness                                                   |
-| `enableContrast`                           | boolean          | false           | Add Lightbulb service for contrast                                                     |
-| `enableHdrSelector`                        | boolean          | true            | Surface HDR modes                                                                      |
-| `enableTestPatterns`                       | boolean          | false           | Surface test patterns                                                                  |
-| `enableLampHours`                          | boolean          | true            | Show lamp-hour sensor                                                                  |
-| `pictureModes`, `hdrModes`, `testPatterns` | arrays           | presets         | Name/code pairs for virtual banks                                                      |
-| `uiLayout`                                 | string           | `"inputs_only"` | `inputs_only` → HDMI in selector, modes as switches; `mixed_virtual` → all in selector |
-| `enablePolling` / `pollingInterval`        | boolean / int    | true / 30       | Background state sync cadence (seconds)                                                |
-| `logging`                                  | string           | `"standard"`    | `"none"`, `"standard"`, or `"debug"`                                                   |
+| Field                                      | Type             | Default      | Description                                    |
+| ------------------------------------------ | ---------------- | ------------ | ---------------------------------------------- |
+| `ip`                                       | string           | —            | Projector IP (required)                        |
+| `adcpPort`                                 | integer          | 53595        | ADCP TCP port                                  |
+| `useAuth` / `password`                     | boolean / string | false / —    | Enable if ADCP "Requires Authentication" is ON |
+| `inputs`                                   | array            | HDMI1/2      | Inputs shown in HomeKit (unique IDs)           |
+| `enableBrightness`                         | boolean          | true         | Add Lightbulb service for brightness           |
+| `enableContrast`                           | boolean          | false        | Add Lightbulb service for contrast             |
+| `enableHdrSelector`                        | boolean          | true         | Surface HDR modes                              |
+| `enableTestPatterns`                       | boolean          | false        | Surface test patterns                          |
+| `enableLampHours`                          | boolean          | true         | Show lamp-hour sensor                          |
+| `pictureModes`, `hdrModes`, `testPatterns` | arrays           | presets      | Name/code pairs for virtual banks              |
+| `enablePolling` / `pollingInterval`        | boolean / int    | true / 30    | Background state sync cadence (seconds)        |
+| `logging`                                  | string           | `"standard"` | `"none"`, `"standard"`, or `"debug"`           |
 
 Example platform config (`~/.homebridge/config.json`):
 

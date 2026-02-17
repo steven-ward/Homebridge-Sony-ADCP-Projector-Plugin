@@ -631,7 +631,7 @@ class ADCP extends EventEmitter {
   // ---- Error / Warning (compact) ---------------------------------------
   // VPL-XW5000 returns ["no_err"] or error array
   async getErrorCode() {
-    const resp = await this.executeCommand(ADCP_COMMANDS.ERROR_CODE);
+    const resp = await this.executeCommand(ADCP_COMMANDS.ERROR_STATUS);
     const str = String(resp || "").trim();
     // Parse JSON array response
     if (str.startsWith("[")) {

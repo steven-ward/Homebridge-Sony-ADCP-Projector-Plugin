@@ -1,4 +1,9 @@
-import { API, AccessoryPlugin, Logging, AccessoryConfig } from "homebridge";
+import {
+  API,
+  DynamicPlatformPlugin,
+  Logging,
+  PlatformConfig,
+} from "homebridge";
 
 export interface InputConfig {
   id: number;
@@ -8,10 +13,10 @@ export interface InputConfig {
 
 export interface ModeConfig {
   name: string;
-  code: number;
+  code: string;
 }
 
-export interface SonyProjectorConfig extends AccessoryConfig {
+export interface SonyProjectorConfig extends PlatformConfig {
   ip: string;
   adcpPort?: number;
   useAuth?: boolean;
@@ -22,20 +27,23 @@ export interface SonyProjectorConfig extends AccessoryConfig {
   enableHdrSelector?: boolean;
   enableTestPatterns?: boolean;
   enableLampHoursSensor?: boolean;
+  enableBlankScreen?: boolean;
+  enableContrast?: boolean;
+  enablePictureModes?: boolean;
+  enableErrorSensor?: boolean;
+  enablePolling?: boolean;
+  pollingInterval?: number;
   pictureModes?: ModeConfig[];
   hdrModes?: ModeConfig[];
   testPatterns?: ModeConfig[];
   staticModel?: string;
   staticSerial?: string;
   logging?: "none" | "standard" | "debug";
-  uiLayout?: "inputs_only" | "mixed_virtual";
-  enablePolling?: boolean;
-  pollingInterval?: number;
 }
 
-export class SonyProjectorAccessory implements AccessoryPlugin {
+export class SonyProjectorPlatform implements DynamicPlatformPlugin {
   constructor(log: Logging, config: SonyProjectorConfig, api: API);
-  getServices(): any[];
+  configureAccessory(accessory: any): void;
 }
 
 export declare function defaultExport(api: API): void;

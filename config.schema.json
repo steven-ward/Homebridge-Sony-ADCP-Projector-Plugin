@@ -148,17 +148,6 @@
         "required": false,
         "description": "Adds a contact sensor that opens when the projector reports an error."
       },
-      "uiLayout": {
-        "title": "HomeKit UI Layout",
-        "type": "string",
-        "default": "inputs_only",
-        "oneOf": [
-          { "title": "Inputs Only (recommended)", "enum": ["inputs_only"] },
-          { "title": "Mixed Virtual (legacy)", "enum": ["mixed_virtual"] }
-        ],
-        "required": false,
-        "description": "inputs_only: TV selector shows only HDMI inputs (advanced controls become dedicated switches). mixed_virtual: HDMI inputs + virtual Picture/HDR/Test Pattern entries are combined in the TV input list."
-      },
       "pictureModes": {
         "title": "Picture Modes",
         "type": "array",
@@ -290,11 +279,6 @@
         "enableHdrSelector",
         "hdrModes"
       ]
-    },
-    {
-      "type": "fieldset",
-      "title": "HomeKit UI",
-      "items": ["uiLayout"]
     },
     {
       "type": "fieldset",
