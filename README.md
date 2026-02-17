@@ -115,7 +115,6 @@ Example platform config (`~/.homebridge/config.json`):
         { "name": "Cinema", "code": "cinema_film_1" },
         { "name": "Game", "code": "game" }
       ],
-      "uiLayout": "inputs_only",
       "pollingInterval": 45
     }
   ]
