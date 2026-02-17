@@ -10,7 +10,6 @@
 
 [Compare changes](https://github.com/steven-ward/Homebridge-Sony-ADCP-Projector-Plugin/compare/v2.3.1...v2.3.2)
 
-
 ## v2.3.1 – 2026-02-17
 
 - fix: include README.md and CHANGELOG.md in npm package (7315ede)

@@ -90,7 +90,7 @@ The Homebridge UI config editor exposes the full schema. Key fields:
 | `enableContrast`                           | boolean          | false        | Add Lightbulb service for contrast             |
 | `enableHdrSelector`                        | boolean          | true         | Surface HDR modes                              |
 | `enableTestPatterns`                       | boolean          | false        | Surface test patterns                          |
-| `enableLampHours`                          | boolean          | true         | Show lamp-hour sensor                          |
+| `enableLampHoursSensor`                    | boolean          | true         | Show lamp-hour sensor                          |
 | `pictureModes`, `hdrModes`, `testPatterns` | arrays           | presets      | Name/code pairs for virtual banks              |
 | `enablePolling` / `pollingInterval`        | boolean / int    | true / 30    | Background state sync cadence (seconds)        |
 | `logging`                                  | string           | `"standard"` | `"none"`, `"standard"`, or `"debug"`           |
@@ -110,7 +110,7 @@ Example platform config (`~/.homebridge/config.json`):
         { "id": 2, "name": "PS5", "adcp": "hdmi2" }
       ],
       "enableBrightness": true,
-      "enableLampHours": true,
+      "enableLampHoursSensor": true,
       "pictureModes": [
         { "name": "Cinema", "code": "cinema_film_1" },
         { "name": "Game", "code": "game" }
