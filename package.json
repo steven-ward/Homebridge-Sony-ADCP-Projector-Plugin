@@ -1,6 +1,6 @@
 {
   "name": "homebridge-sony-adcp-projector",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "displayName": "Homebridge Sony ADCP Projector",
   "description": "Homebridge accessory to control Sony projectors over ADCP (IP). Exposes a HomeKit Television tile with input sources.",
   "main": "index.js",

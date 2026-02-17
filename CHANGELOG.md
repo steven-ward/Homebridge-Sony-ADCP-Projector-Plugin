@@ -1,5 +1,16 @@
 # Changelog
 
+## v2.3.1 – 2026-02-17
+
+- fix: include README.md and CHANGELOG.md in npm package (7315ede)
+- chore: remove internal files from git tracking, fix types and schema (62e9cc9)
+- fix: prevent polling from overriding Active during power transitions (8417475)
+- docs: update README for v2.3.0 platform plugin architecture (90bf12b)
+- fix: remove self-referential dependency from package.json (253235e)
+
+[Compare changes](https://github.com/steven-ward/Homebridge-Sony-ADCP-Projector-Plugin/compare/v2.3.0...v2.3.1)
+
+
 ## v2.3.0 – 2026-02-17
 
 ### Added
