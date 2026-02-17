@@ -10,7 +10,6 @@
 
 [Compare changes](https://github.com/steven-ward/Homebridge-Sony-ADCP-Projector-Plugin/compare/v2.3.0...v2.3.1)
 
-
 ## v2.3.0 – 2026-02-17
 
 ### Added
