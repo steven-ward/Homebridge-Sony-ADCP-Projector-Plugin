@@ -36,10 +36,6 @@ config.schema.json # Homebridge UI schema (defines what appears in config editor
 - **Command pacing**: 200ms debounce between commands (`debounceMs`). Don't remove — projector drops commands sent too fast.
 - **`.tgz` files in repo root**: Packed release archives. Never edit or commit these manually — `publish.sh` manages them.
 
-## Known Gaps (unimplemented)
-
-- **Warm-up/cool-down state machine**: `CurrentMediaState`/`TargetMediaState` are set statically to STOP. The Home app never shows "loading" during warm-up or reflects cool-down. Reference implementation exists in `accessory.legacy.js` (local only, not in git) lines 229-234, 584-706.
-
 ## Release Workflow
 
 ```bash
