@@ -1,8 +1,8 @@
 {
   "pluginAlias": "SonyProjector",
-  "pluginType": "accessory",
+  "pluginType": "platform",
   "singular": true,
-  "headerDisplay": "Control your Sony projector over IP using Sony's ADCP protocol. Exposes a HomeKit Television tile with inputs.",
+  "headerDisplay": "Control your Sony projector over IP using Sony's ADCP protocol. Exposes a HomeKit Television tile with inputs; picture/HDR controls are separate from input selection.",
   "schema": {
     "type": "object",
     "properties": {
@@ -92,6 +92,133 @@
           { "id": 2, "name": "HDMI 2", "adcp": "hdmi2" }
         ]
       },
+      "enableBlankScreen": {
+        "title": "Enable Blank Screen Switch",
+        "type": "boolean",
+        "default": true,
+        "required": false,
+        "description": "Adds a switch to toggle video mute (blank screen)."
+      },
+      "enableBrightness": {
+        "title": "Enable Brightness Slider",
+        "type": "boolean",
+        "default": true,
+        "required": false,
+        "description": "Adds a Lightbulb service with a Brightness slider (0–100)."
+      },
+      "enableContrast": {
+        "title": "Enable Contrast Slider",
+        "type": "boolean",
+        "default": false,
+        "required": false,
+        "description": "Adds a Lightbulb service with a Contrast slider (0–100)."
+      },
+      "enablePictureModes": {
+        "title": "Enable Picture Mode Switches",
+        "type": "boolean",
+        "default": false,
+        "required": false,
+        "description": "Adds exclusive switches for each picture mode (Cinema, Reference, Game, etc.)."
+      },
+      "enableHdrSelector": {
+        "title": "Enable HDR Mode Selector",
+        "type": "boolean",
+        "default": true,
+        "required": false,
+        "description": "Adds HDR controls. In **UI Layout → Option 3 (Legacy Mixed List)** HDR modes appear in the TV Inputs list; otherwise they appear as separate switches."
+      },
+      "enableTestPatterns": {
+        "title": "Enable Test Patterns (Advanced)",
+        "type": "boolean",
+        "default": false,
+        "required": false,
+        "description": "Expose test patterns as virtual inputs (e.g., Grid, Color Bars). Hidden by default."
+      },
+      "enableLampHoursSensor": {
+        "title": "Enable Lamp/Laser Hours Sensor",
+        "type": "boolean",
+        "default": true,
+        "required": false,
+        "description": "Adds a read-only sensor that displays total hours (shown as lux value)."
+      },
+      "enableErrorSensor": {
+        "title": "Enable Error Status Sensor",
+        "type": "boolean",
+        "default": false,
+        "required": false,
+        "description": "Adds a contact sensor that opens when the projector reports an error."
+      },
+      "uiLayout": {
+        "title": "HomeKit UI Layout",
+        "type": "string",
+        "default": "inputs_only",
+        "oneOf": [
+          { "title": "Inputs Only (recommended)", "enum": ["inputs_only"] },
+          { "title": "Mixed Virtual (legacy)", "enum": ["mixed_virtual"] }
+        ],
+        "required": false,
+        "description": "inputs_only: TV selector shows only HDMI inputs (advanced controls become dedicated switches). mixed_virtual: HDMI inputs + virtual Picture/HDR/Test Pattern entries are combined in the TV input list."
+      },
+      "pictureModes": {
+        "title": "Picture Modes",
+        "type": "array",
+        "description": "Picture Mode options. Use string codes for VPL-XW5000 (e.g., 'reference', 'cinema_film_1').",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": { "title": "Display Name", "type": "string" },
+            "code": {
+              "title": "ADCP Code (string or number)",
+              "type": "string"
+            }
+          },
+          "required": ["name", "code"]
+        },
+        "default": [
+          { "name": "Reference", "code": "reference" },
+          { "name": "Cinema Film 1", "code": "cinema_film_1" },
+          { "name": "Cinema Film 2", "code": "cinema_film_2" },
+          { "name": "Game", "code": "game" },
+          { "name": "IMAX", "code": "imax" }
+        ]
+      },
+      "hdrModes": {
+        "title": "HDR Modes",
+        "type": "array",
+        "description": "HDR Mode options. Use string codes for VPL-XW5000 (e.g., 'auto', 'off', 'hdr10', 'hlg').",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": { "title": "Display Name", "type": "string" },
+            "code": { "title": "ADCP Code (string)", "type": "string" }
+          },
+          "required": ["name", "code"]
+        },
+        "default": [
+          { "name": "HDR Auto", "code": "auto" },
+          { "name": "HDR10", "code": "hdr10" },
+          { "name": "HLG", "code": "hlg" },
+          { "name": "HDR Off", "code": "off" }
+        ]
+      },
+      "testPatterns": {
+        "title": "Test Patterns (Advanced)",
+        "type": "array",
+        "description": "Test pattern options. Use string codes for VPL-XW5000.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": { "title": "Pattern Name", "type": "string" },
+            "code": { "title": "ADCP Code (string)", "type": "string" }
+          },
+          "required": ["name", "code"]
+        },
+        "default": [
+          { "name": "Off", "code": "off" },
+          { "name": "Grid", "code": "grid" },
+          { "name": "Color Bars", "code": "color_bars" }
+        ]
+      },
       "staticModel": {
         "title": "Static Model (optional)",
         "type": "string",
@@ -115,6 +242,22 @@
         ],
         "required": false,
         "description": "Controls verbosity of plugin logs."
+      },
+      "enablePolling": {
+        "title": "Enable State Polling",
+        "type": "boolean",
+        "default": true,
+        "required": false,
+        "description": "Periodically polls projector state (power, brightness, identifiers) to keep HomeKit in sync."
+      },
+      "pollingInterval": {
+        "title": "Polling Interval (seconds)",
+        "type": "integer",
+        "default": 30,
+        "minimum": 10,
+        "maximum": 300,
+        "required": false,
+        "description": "How often to poll when enabled. Increase to reduce network traffic."
       }
     },
     "required": ["ip"]
@@ -137,8 +280,36 @@
     },
     {
       "type": "fieldset",
+      "title": "Picture Controls",
+      "items": [
+        "enableBlankScreen",
+        "enableBrightness",
+        "enableContrast",
+        "enablePictureModes",
+        "pictureModes",
+        "enableHdrSelector",
+        "hdrModes"
+      ]
+    },
+    {
+      "type": "fieldset",
+      "title": "HomeKit UI",
+      "items": ["uiLayout"]
+    },
+    {
+      "type": "fieldset",
+      "title": "Sensors & Diagnostics",
+      "items": [
+        "enableLampHoursSensor",
+        "enableErrorSensor",
+        "enableTestPatterns",
+        "testPatterns"
+      ]
+    },
+    {
+      "type": "fieldset",
       "title": "Advanced",
-      "items": ["logging"]
+      "items": ["logging", "enablePolling", "pollingInterval"]
     }
   ]
 }

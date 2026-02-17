@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/steve/Documents/Code/homebridge-sony-adcp-projector && npm run lint:fix -- \"$CLAUDE_TOOL_INPUT_FILE_PATH\" 2>/dev/null; npm run fmt 2>/dev/null"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"$CLAUDE_TOOL_INPUT_FILE_PATH\" | grep -qE '(package-lock\\.json|\\.tgz)$' && echo 'Blocked: do not edit lockfiles or packed archives' && exit 2 || exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}

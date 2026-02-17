@@ -1,123 +1,104 @@
 # Homebridge Sony ADCP Projector Plugin
 
-A Homebridge plugin to control Sony VPL-XW5000ES projector using the ADCP protocol over IP.
-
-## Features
-
-- **Power Control**: Turn the projector on or off via HomeKit.
-- **Input Selection**: Switch between different input sources (e.g., HDMI1, HDMI2).
-- **Volume and Mute Control**: Adjust volume and mute/unmute audio.
-- **Image Quality Settings**: Adjust brightness, contrast, and picture mode.
-- **Display Settings**: Change aspect ratio, screen position, and screen size.
-- **Freeze and Split Screen**: Control freeze function and split-screen mode.
-- **Authentication Support**: Authenticate with the projector if required.
-- **Persistent Connection**: Efficient communication with the projector using a persistent TCP/IP connection.
-- **Robust Error Handling**: Handles network errors, timeouts, and disconnections gracefully.
-- **Logging**: Detailed logs for troubleshooting and monitoring.
-- **Error & Warning Status Monitoring**: Monitor the projector's error and warning statuses.
-- **Network Configuration Support**: Configure network settings for the projector.
-- **Improved Logging & Debugging**: Enhanced logging features for better debugging.
-- **Automatic Serial Number Retrieval**: Automatically retrieve the projector's serial number.
-
-## Installation
-
-1. **Install Homebridge** (if not already installed):
-
-   ```bash
-   sudo npm install -g homebridge
-   ```
-
-## Configuration
-
-The plugin requires a configuration in JSON format. The following fields are required:
-
-- `adcpPort`: The port used for ADCP communication.
-- Updated logging options.
-
-## Usage
-
-To change inputs, use the HomeKit interface to select the desired input source. To adjust picture settings, access the respective settings in the HomeKit app. You can retrieve the projector status via the Homebridge interface.
-
-## Troubleshooting
-
-Common issues include authentication errors and network connectivity problems. Ensure that the projector is on the same network and that the correct authentication details are provided.
-# Homebridge Sony ADCP Projector
-
 [![npm](https://img.shields.io/npm/v/homebridge-sony-adcp-projector)](https://www.npmjs.com/package/homebridge-sony-adcp-projector)
-[![Homebridge Verified](https://img.shields.io/badge/homebridge-verified-brightgreen)](https://homebridge.io)
+[![Downloads](https://img.shields.io/npm/dm/homebridge-sony-adcp-projector)](https://www.npmjs.com/package/homebridge-sony-adcp-projector)
 
-Control your Sony projector over IP using the ADCP protocol. This plugin exposes the projector to Apple HomeKit as a **Television** accessory, complete with power control, input selection, and the native Remote UI in the Home app.
-
----
-
-## Features
-
-### Core
-- **Power On / Off** from the Home app.
-- **Input Source Selection** (HDMI1, HDMI2, etc.).
-- **HomeKit Television UI** with remote control support.
-- Optional **ADCP Authentication**.
-- **Automatic Serial Number Retrieval**.
-
-### Optional Controls *(model-dependent)*
-- Volume and mute.
-- Brightness, contrast, picture mode.
-- Aspect ratio, screen position, screen size.
-- Freeze and split screen.
-
-### Other
-- Persistent TCP/IP connection.
-- Error & warning status monitoring.
-- Detailed logging for troubleshooting.
+Control Sony projectors that expose the ADCP (Advanced Display Control Protocol) interface directly from Apple HomeKit. The accessory registers as a native **Television** service so you get power, inputs, and remote controls in the Home app plus optional extras (modes, brightness, sensors).
 
 ---
 
-## Requirements
-- Node.js >= 18.20.0
-- Homebridge >= 1.6.0
-- A Sony projector with **ADCP** enabled (Settings > Network Settings > ADCP)
-- The projector’s IP address (reserve it via DHCP for stability)
-- Default ADCP port: **53595**
-
----
-
-## Installation
+## Quick Start
 
 ```bash
+# 1. Install Homebridge (skip if already running)
 sudo npm install -g homebridge
+
+# 2. Install the plugin
 sudo npm install -g homebridge-sony-adcp-projector
+
+# 3. Enable ADCP on the projector
+#   Settings → Network Settings → ADCP → Enable (port: 53595)
+
+# 4. Add accessory in the Homebridge UI with your projector IP
+# 5. Restart Homebridge
 ```
 
 ---
 
-## Configuration
+## Features
 
-Use the Homebridge UI to configure the plugin via the graphical settings editor. The most important fields:
+| Area           | Details                                                                               |
+| -------------- | ------------------------------------------------------------------------------------- |
+| Power & Inputs | Native TV tile with Siri, automations, and remote control support                     |
+| Picture / HDR  | Picture Mode, HDR Mode, Test Pattern selectors (virtual inputs or dedicated switches) |
+| Brightness     | Lightbulb slider that maps to projector brightness                                    |
+| Sensors        | Error warning indicator + Lamp/Laser hours readout                                    |
+| Reliability    | Debounced ADCP command queue, background polling, connection lifecycle logging        |
+| Tooling        | Config schema for Homebridge UI, TypeScript definitions, Jest-ready CI workflow       |
 
-| Field              | Type    | Default | Description |
-|--------------------|---------|---------|-------------|
-| `ip`               | string  | —       | Projector IP address (required). |
-| `adcpPort`         | integer | 53595   | TCP port for ADCP. |
-| `useAuth`          | boolean | false   | Whether ADCP authentication is required. |
-| `password`         | string  | —       | Password for ADCP authentication (if enabled). |
-| `timeout`          | integer | 5       | Timeout in seconds for commands. |
-| `inputs`           | array   | HDMI 1, HDMI 2 | Inputs to appear in HomeKit. |
+---
 
-Example JSON config:
+## Compatibility
+
+### Tested Models
+
+| Model        | Status         | Notes                                            |
+| ------------ | -------------- | ------------------------------------------------ |
+| VPL‑XW5000ES | ✅             | Full regression tested                           |
+| VPL‑XW7000ES | ✅ (community) | Reported working with identical ADCP command set |
+
+> Any Sony projector with ADCP enabled should work, but commands can vary. Refer to the protocol PDF included in this repo.
+
+### Requirements
+
+- Node.js **18.20+** (or 20/22)
+- Homebridge **1.11+**
+- Projector reachable over IP with ADCP enabled
+- Default ADCP port: **53595** (adjust if changed in the projector)
+
+---
+
+## Configuration Overview
+
+The Homebridge UI config editor exposes the full schema. Key fields:
+
+| Field                                      | Type              | Default         | Description                                                                            |
+| ------------------------------------------ | ----------------- | --------------- | -------------------------------------------------------------------------------------- |
+| `ip`                                       | string            | —               | Projector IP (required)                                                                |
+| `adcpPort`                                 | integer           | 53595           | ADCP TCP port                                                                          |
+| `useAuth` / `password`                     | boolean / string  | false / —       | Enable if ADCP “Requires Authentication” is ON                                         |
+| `inputs`                                   | array             | HDMI1/2         | Inputs shown in HomeKit (unique IDs)                                                   |
+| `enableBrightness`                         | boolean           | true            | Add Lightbulb service for brightness                                                   |
+| `enableHdrSelector`                        | boolean           | true            | Surface HDR modes                                                                      |
+| `enableTestPatterns`                       | boolean           | false           | Surface test patterns                                                                  |
+| `enableLampHoursSensor`                    | boolean           | true            | Show lamp-hour sensor                                                                  |
+| `pictureModes`, `hdrModes`, `testPatterns` | arrays            | presets         | Name/code pairs for virtual banks                                                      |
+| `uiLayout`                                 | string            | `"inputs_only"` | `inputs_only` → HDMI in selector, modes as switches; `mixed_virtual` → all in selector |
+| `enablePolling` / `pollingInterval`        | boolean / integer | true / 30       | Background state sync cadence (seconds)                                                |
+| `logging`                                  | string            | `"standard"`    | `"none"`, `"standard"`, or `"debug"`                                                   |
+
+Example:
+
 ```json
 {
   "accessories": [
     {
       "accessory": "SonyProjector",
-      "name": "Sony Projector",
-      "ip": "192.168.1.101",
+      "name": "Cinema Room",
+      "ip": "192.168.1.50",
       "adcpPort": 53595,
-      "useAuth": false,
-      "timeout": 5,
       "inputs": [
         { "id": 1, "name": "Apple TV", "adcp": "hdmi1" },
         { "id": 2, "name": "PS5", "adcp": "hdmi2" }
-      ]
+      ],
+      "enableBrightness": true,
+      "enableLampHoursSensor": true,
+      "pictureModes": [
+        { "name": "Cinema", "code": 1 },
+        { "name": "Game", "code": 3 }
+      ],
+      "uiLayout": "inputs_only",
+      "pollingInterval": 45
     }
   ]
 }
@@ -125,35 +106,61 @@ Example JSON config:
 
 ---
 
-## Usage
+## ADCP Protocol Reference (Common Commands)
 
-Once added to HomeKit:
+| Command                | Description                                   |
+| ---------------------- | --------------------------------------------- |
+| `power "on"` / `"off"` | Power control                                 |
+| `power_status ?`       | Read power state (`on`, `standby`, `cooling`) |
+| `input "hdmi1"`        | Switch input                                  |
+| `pmod <code>`          | Picture mode                                  |
+| `hdrv <code>`          | HDR mode                                      |
+| `brit <0-100>`         | Brightness                                    |
+| `mute 0/1`             | Video mute (Blank Screen)                     |
+| `lamp ?`               | Lamp/laser hours                              |
+| `erst ?`               | Error code                                    |
+
+> The full Sony PDF lives in `docs/Sony_ADCP_Supported_Commands.pdf` inside this repo. Use it for additional picture, geometry, or network commands.
+
+---
+
+## Usage Tips
+
 - **Single tap** the TV tile to toggle power.
-- **Long press** to open remote controls, input selector, and settings.
-- Select inputs from the list defined in your config.
+- **Long press** to access inputs, brightness, and remote keys.
+- In `inputs_only` layout, picture/HDR/test pattern toggles appear as exclusive switch groups for quick access without cluttering the TV selector.
+
+If HomeKit shows a house icon instead of a TV icon, remove and re-add the accessory after upgrading—the service signature changed with the Television profile.
 
 ---
 
 ## Troubleshooting
 
-- **No response / offline** → Verify ADCP is enabled and the IP/port are correct.
-- **Authentication errors** → Ensure projector’s ADCP settings match the plugin config.
-- **Slow commands** → Increase `timeout` in plugin settings.
+| Symptom                             | Fix                                                                                        |
+| ----------------------------------- | ------------------------------------------------------------------------------------------ |
+| “No Response” / offline             | Confirm projector IP + ADCP port, ensure it’s awake, and check polling interval            |
+| Authentication failures             | Verify ADCP password (Settings → Network → ADCP) and that `useAuth` matches the projector  |
+| Commands lag or first request fails | Debounce + retry are built-in; ensure Homebridge host can reach projector with low latency |
+| Sensor data stale                   | Increase polling interval (default 30s) or manually refresh in Home app                    |
+
+Enable `logging: "debug"` for verbose ADCP traces in Homebridge logs.
 
 ---
 
 ## Development
 
-Clone the repo and link it to a local Homebridge instance:
 ```bash
 git clone https://github.com/steven-ward/Homebridge-Sony-ADCP-Projector-Plugin.git
 cd Homebridge-Sony-ADCP-Projector-Plugin
 npm install
-npm link
-homebridge -D -P .
+npm run lint
+npm run test
 ```
+
+CI (GitHub Actions) runs lint + Jest on Node 18/20/22. TypeScript definitions (`index.d.ts`) ship with the package for better editor support.
 
 ---
 
 ## License
+
 [MIT](LICENSE)
