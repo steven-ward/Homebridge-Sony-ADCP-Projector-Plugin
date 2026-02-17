@@ -44,6 +44,7 @@
     "adcp-commands.js",
     "config.schema.json",
     "README.md",
+    "CHANGELOG.md",
     "index.d.ts",
     "LICENSE"
   ],
