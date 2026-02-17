@@ -161,6 +161,7 @@ class SonyProjectorPlatform {
 
     // State caches
     this.powerState = false;
+    this._powerTransitioning = false;
     this.currentInput = this.inputs[0]?.id ?? 1;
     this.blankScreenState = false;
     this.brightnessValue = 50;
@@ -331,6 +332,11 @@ class SonyProjectorPlatform {
         const input = this.inputs.find((i) => i.id === id);
         if (!input) {
           throw new this.api.hap.HapStatusError(-70408);
+        }
+        // Don't try to switch inputs while projector is warming up or cooling down
+        if (this._powerTransitioning) {
+          this.debug("Input change ignored — projector is transitioning");
+          throw new this.api.hap.HapStatusError(-70410);
         }
         try {
           await this.adcpClient.setInputSource(input.adcp);
@@ -781,16 +787,23 @@ class SonyProjectorPlatform {
       const on = await this.adcpClient.getPowerState();
       if (on !== this.powerState) {
         this.powerState = on;
-        this.tvService?.updateCharacteristic(
-          this.Characteristic.Active,
-          on ? 1 : 0,
-        );
-        this.brightnessService?.updateCharacteristic(
-          this.Characteristic.On,
-          on,
-        );
-        this.contrastService?.updateCharacteristic(this.Characteristic.On, on);
-        this._completePowerTransition(on);
+        // Skip HomeKit updates while _postPowerPoll owns the transition
+        // (prevents polling from overriding Active during warm-up / cool-down)
+        if (!this._powerTransitioning) {
+          this.tvService?.updateCharacteristic(
+            this.Characteristic.Active,
+            on ? 1 : 0,
+          );
+          this.brightnessService?.updateCharacteristic(
+            this.Characteristic.On,
+            on,
+          );
+          this.contrastService?.updateCharacteristic(
+            this.Characteristic.On,
+            on,
+          );
+          this._completePowerTransition(on);
+        }
         this.debug(`Power state updated: ${on ? "on" : "off"}`);
       }
     } catch (e) {
@@ -801,6 +814,7 @@ class SonyProjectorPlatform {
   // ── Power transition helpers ────────────────────────────────────────────────
 
   _beginPowerTransition(targetOn) {
+    this._powerTransitioning = true;
     try {
       this.tvService?.updateCharacteristic(
         this.Characteristic.CurrentMediaState,
@@ -814,6 +828,7 @@ class SonyProjectorPlatform {
   }
 
   _completePowerTransition(isOn) {
+    this._powerTransitioning = false;
     try {
       this.tvService?.updateCharacteristic(
         this.Characteristic.CurrentMediaState,
@@ -833,6 +848,7 @@ class SonyProjectorPlatform {
       try {
         const on = await this.adcpClient.getPowerState();
         if (on === targetOn) {
+          this.powerState = on;
           this._completePowerTransition(on);
           return;
         }
