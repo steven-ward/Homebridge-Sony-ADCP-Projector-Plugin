@@ -35,6 +35,7 @@ config.schema.json # Homebridge UI schema (defines what appears in config editor
 - **Connection cooldown**: After a failed connection, a 10-second cooldown blocks retries to avoid hammering a powered-off projector. Controlled by `_connectionCooldownMs`.
 - **Command pacing**: 200ms debounce between commands (`debounceMs`). Don't remove — projector drops commands sent too fast.
 - **`.tgz` files in repo root**: Packed release archives. Never edit or commit these manually — `publish.sh` manages them.
+- **Warm-up/cool-down state machine is implemented**: `_beginPowerTransition()` sets `CurrentMediaState` to LOADING/INTERRUPTED; `_completePowerTransition()` sets PLAY/STOP; `_postPowerPoll()` drives a 30s polling window. Don't add it again.
 
 ## Release Workflow
 
@@ -42,7 +43,9 @@ config.schema.json # Homebridge UI schema (defines what appears in config editor
 bash publish.sh
 ```
 
-Interactive — prompts for patch/minor/major bump, handles CHANGELOG.md update, git commit + tag, npm publish, and push. Requires npm 2FA OTP if account has it enabled.
+**Requires an interactive terminal** — Claude cannot run this. User must run it directly. Prompts for patch/minor/major bump, handles CHANGELOG.md update, git commit + tag, npm publish, and push. Requires npm 2FA OTP if account has it enabled.
+
+**Post-publish:** Prettier reformats `CHANGELOG.md` during the run but doesn't re-commit it. Always `git add CHANGELOG.md && git commit && git push` after publishing, or the next publish will fail with "uncommitted changes".
 
 ## Config Schema
 
