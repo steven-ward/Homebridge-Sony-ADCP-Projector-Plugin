@@ -36,9 +36,21 @@ get_origin_https() {
 
 today() { date +"%Y-%m-%d"; }
 
+# Ensure a command exists, else fail with a helpful message.
+require_cmd() { command -v "$1" >/dev/null 2>&1 || die "Missing dependency: $1. $2"; }
+
 # --- Start -----------------------------------------------------------------
 
+
 cd "$(repo_root)"
+
+# Ensure required tools exist
+require_cmd npm "Install Node.js (which includes npm) and ensure it's on your PATH.\n  • Easiest (Homebrew + nvm):\n      brew install nvm\n      mkdir -p ~/.nvm\n      echo 'export NVM_DIR=\"\$HOME/.nvm\"' >> ~/.zshrc\n      echo '[ -s \"\$(brew --prefix nvm)/nvm.sh\" ] && . \"\$(brew --prefix nvm)/nvm.sh\"' >> ~/.zshrc\n      source ~/.zshrc\n      nvm install --lts\n  • Or quick Homebrew install (single version):\n      brew install node" 
+
+# Ensure Git identity is set for this repo
+if ! git config user.name >/dev/null 2>&1 || ! git config user.email >/dev/null 2>&1; then
+  die "Git user.name/email not set for this repo.\nRun:\n  git config user.name \"Steve Ward\"\n  git config user.email \"steven@stevenward.com\"";
+fi
 
 BRANCH=$(get_default_branch)
 echo "🪵 Using branch: $BRANCH"

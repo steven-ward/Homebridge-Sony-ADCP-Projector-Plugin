@@ -1,30 +1,30 @@
-const net = require('net');
+const net = require("net");
 
-const PROJECTOR_IP = '192.168.1.101';
+const PROJECTOR_IP = "192.168.1.101";
 const ADCP_PORT = 53595;
 const TIMEOUT = 1000;
-const CMD = 'POWR?\r\n';
+const CMD = "POWR?\r\n";
 
 function tryProjector(ip) {
   return new Promise((resolve) => {
     const socket = new net.Socket();
-    let responseData = '';
+    let responseData = "";
 
     socket.setTimeout(TIMEOUT);
     socket.connect(ADCP_PORT, ip, () => {
       socket.write(CMD);
     });
 
-    socket.on('data', (data) => {
+    socket.on("data", (data) => {
       responseData += data.toString();
       socket.destroy();
     });
 
-    socket.on('timeout', () => socket.destroy());
-    socket.on('error', (err) => {
+    socket.on("timeout", () => socket.destroy());
+    socket.on("error", (err) => {
       resolve({ ip, error: err.message });
     });
-    socket.on('close', () => {
+    socket.on("close", () => {
       if (responseData.trim()) {
         resolve({ ip, response: responseData.trim() });
       } else {

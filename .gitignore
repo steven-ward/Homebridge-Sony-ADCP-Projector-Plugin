@@ -1,0 +1,9 @@
+node_modules/
+*.tgz
+*.log
+.DS_Store
+.env
+
+# Live-device test output
+adcp-test-*.json
+homebridge.log.txt

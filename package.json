@@ -1,9 +1,10 @@
 {
   "name": "homebridge-sony-adcp-projector",
-  "version": "2.0.0",
+  "version": "2.3.0",
   "displayName": "Homebridge Sony ADCP Projector",
   "description": "Homebridge accessory to control Sony projectors over ADCP (IP). Exposes a HomeKit Television tile with input sources.",
   "main": "index.js",
+  "type": "commonjs",
   "keywords": [
     "homebridge-plugin",
     "homebridge",
@@ -11,7 +12,8 @@
     "projector",
     "adcp",
     "homekit",
-    "tv"
+    "tv",
+    "television"
   ],
   "author": "Steve Ward <steven@stevenward.com>",
   "license": "MIT",
@@ -24,23 +26,31 @@
   },
   "homepage": "https://github.com/steven-ward/Homebridge-Sony-ADCP-Projector-Plugin#readme",
   "engines": {
-    "node": ">=18.20.0",
-    "homebridge": ">=1.6.0"
+    "node": "^18.20.0 || ^20.15.0 || ^22.0.0",
+    "homebridge": ">=1.11.0"
+  },
+  "peerDependencies": {
+    "homebridge": ">=1.11.0"
   },
   "homebridge": {
     "pluginAlias": "SonyProjector",
-    "pluginType": "accessory"
+    "pluginType": "platform"
   },
   "schema": "config.schema.json",
   "files": [
     "index.js",
-    "accessory.js",
+    "platform.js",
     "adcp.js",
+    "adcp-commands.js",
     "config.schema.json",
     "README.md",
+    "index.d.ts",
     "LICENSE"
   ],
-  "dependencies": {},
+  "types": "index.d.ts",
+  "dependencies": {
+    "homebridge-sony-adcp-projector": "file:homebridge-sony-adcp-projector-2.3.0.tgz"
+  },
   "devDependencies": {
     "@eslint/js": "^9.22.0",
     "eslint": "^8.57.1",
@@ -49,9 +59,10 @@
     "prettier": "^3.0.0"
   },
   "scripts": {
-    "lint": "eslint . --fix || true",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "fmt": "prettier -w .",
-    "test": "jest -i -u || true",
+    "test": "jest --runInBand",
     "prepublishOnly": "npm run lint && npm run test && npm run fmt"
   }
 }

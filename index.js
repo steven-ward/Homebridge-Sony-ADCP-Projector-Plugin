@@ -1,10 +1,9 @@
 // index.js
-const SonyProjectorAccessory = require('./accessory');
+const SonyProjectorPlatform = require("./platform");
+
+const PLUGIN_NAME = "homebridge-sony-adcp-projector";
+const PLATFORM_NAME = "SonyProjector";
 
 module.exports = (api) => {
-  api.registerAccessory(
-    'homebridge-sony-adcp-projector',
-    'SonyProjector',
-    SonyProjectorAccessory
-  );
+  api.registerPlatform(PLUGIN_NAME, PLATFORM_NAME, SonyProjectorPlatform);
 };
