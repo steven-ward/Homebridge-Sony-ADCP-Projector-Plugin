@@ -1,5 +1,16 @@
 # Changelog
 
+## v2.3.2 – 2026-02-17
+
+- chore: fmt CHANGELOG.md (fa24fc4)
+- docs: remove uiLayout from example config in README (52dfd16)
+- docs: remove stale Known Gaps section — state machine already implemented (b1f7cc1)
+- docs: update CLAUDE.md — remove fixed bugs, note remaining state machine gap (8064421)
+- chore: update dev dependencies to resolve js-yaml Dependabot alerts (dbfb499)
+
+[Compare changes](https://github.com/steven-ward/Homebridge-Sony-ADCP-Projector-Plugin/compare/v2.3.1...v2.3.2)
+
+
 ## v2.3.1 – 2026-02-17
 
 - fix: include README.md and CHANGELOG.md in npm package (7315ede)
